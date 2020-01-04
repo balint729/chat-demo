@@ -1,10 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const OneSignal = require('onesignal-node'); 
 const app = express();
+
 app.use(express.static(path.join(__dirname, 'build')));
 app.use(bodyParser.json());
 
+
+const client = new OneSignal.Client('2e5a0a97-b912-40e3-b417-82c161b5020e', 'YTAyNDU4MGMtYjk0OS00YTdkLWJkOGEtZGE4YmRjNGNmODRm');
 
 app.get('/', function (req, res) {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
@@ -33,7 +37,22 @@ app.post('/message', (req, res, next) => {
 		title: 'New message!',
 		message,
 		timestamp: new Date()
-	});
+    });
+    
+    const notification = {
+        contents: {
+          'en': `New notification ${message}`,
+        },
+        included_segments: ['Subscribed Users'],
+        filters: [
+          { field: 'tag', key: 'level', relation: '>', value: 10 }
+        ]
+      };
+
+      client.createNotification(notification)
+        .then(response => {})
+        .catch(e => {});
+
 })
 
 app.listen(process.env.PORT || 8080, () => {
