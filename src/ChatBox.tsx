@@ -1,31 +1,38 @@
 import React from 'react';
 
+type Message = {
+    message: string;
+    timestamp: string;
+    title: string;
+}
+
 const ChatBox: React.FC = () => {
 
-    const [message, setMessage] = React.useState('');
-
-    const sendMessage = () => {
-        fetch('/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-              },
-            body: JSON.stringify({message: message})})
-            .then((response) => {
-                console.log(response)
-            })
-            .catch(error => console.log(error))
+    const [messageContainer, setMessageContainer] = React.useState<Message[]>([]);
+    
+    const evtSource = new EventSource('/eventstream');
+    evtSource.addEventListener('message', event => {
+        const data = JSON.parse(event.data);
+        console.log(`New message received ${data}`, data);
+        setMessageContainer([
+            ...messageContainer,
+            data
+        ]);
         
-    }
-
-    const handleChange = (value: string) => {
-        setMessage(value);
-    }
+    })
 
     return (
             <div>
-                <input onChange={(event) => handleChange(event.target.value)}/>
-                <button onClick={() => sendMessage()} children={'Send message'}/>
+                {messageContainer.map((message, index) => (
+                    <div>
+                        <p key={`timeStamp-${index}`}>
+                            {new Date(message.timestamp).toString()}
+                        </p>
+                        <p key={`message-${index}`}>
+                            {message.message}
+                        </p>
+                    </div>
+                ))}
             </div>
             
     )
