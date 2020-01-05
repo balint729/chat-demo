@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 type Message = {
     message: string;
@@ -6,20 +6,31 @@ type Message = {
     title: string;
 }
 
-const ChatBox: React.FC = () => {
+const ChatBox: any = () => {
 
     const [messageContainer, setMessageContainer] = React.useState<Message[]>([]);
     
-    const evtSource = new EventSource('/eventstream');
-    evtSource.addEventListener('message', event => {
-        const data = JSON.parse(event.data);
-        console.log(`New message received ${data}`, data);
-        setMessageContainer([
-            ...messageContainer,
-            data
-        ]);
-        
-    })
+    useEffect(() => {
+        const evtSource = new EventSource('/eventstream');
+        evtSource.addEventListener('message', handleMessage)
+
+        // Specify how to clean up after this effect:
+        return function cleanup() {
+            evtSource.removeEventListener('message', handleMessage);
+        };
+    });
+
+    const handleMessage = (event: any) => {
+            const data = JSON.parse(event.data);
+            console.log(`New message received ${data}`, data);
+            setMessageContainer([
+                ...messageContainer,
+                data
+            ]);
+            
+    }
+
+    
 
     return (
             <div>
